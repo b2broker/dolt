@@ -1,0 +1,44 @@
+version: "1.0"
+versioning:
+    update-major: []
+    update-minor: [feat]
+    update-patch: [build, ci, chore, docs, fix, perf, refactor, style, test]
+    ignore-unknown: false
+tag:
+    pattern: 'v%d.%d.%d.%d'
+release-notes:
+    headers:
+        breaking-change: Breaking Changes
+        feat: Features
+        fix: Bug Fixes
+        refactor: Refactored
+        docs: Documentation Updated
+branches:
+    prefix: ([a-z]+\/)?
+    suffix: (-.*)?
+    disable-issue: false
+    skip: [master, main, developer]
+    skip-detached: false
+commit-message:
+    types: 
+        - build
+        - ci
+        - chore
+        - docs
+        - feat
+        - fix
+        - perf
+        - refactor
+        - revert
+        - style
+        - test
+    scope:
+        values: []
+    footer:
+        issue:
+            key: jira
+            key-synonyms: [Jira, JIRA]
+            use-hash: false
+            add-value-prefix: ""
+    issue:
+        regex: '[A-Z]+-[0-9]+'
