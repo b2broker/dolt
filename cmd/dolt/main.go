@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"syscall"
 )
 
 type Handler struct{}
@@ -23,7 +24,7 @@ func main() {
 	// TODO: Define list of ignored syscall Signals
 	// signal.Ignore(syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGKILL)
 
-	signal.Notify(sigint)
+	signal.Notify(sigint, syscall.SIGTERM, syscall.SIGQUIT)
 
 	healthSrv := http.Server{
 		Addr:    ":8080",
