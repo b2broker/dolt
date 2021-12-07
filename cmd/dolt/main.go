@@ -48,7 +48,14 @@ func main() {
 		signal.Ignore(cfg.ignoreSigs...)
 	}
 
-	signal.Notify(sigint, syscall.SIGTERM, syscall.SIGQUIT)
+	signal.Notify(sigint, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGINT)
+
+	if cfg.lifeTime > 0 {
+		go func() {
+			<-time.After(cfg.lifeTime)
+			close(sigint)
+		}()
+	}
 
 	healthSrv := http.Server{
 		Addr:    cfg.healthUri.Host,
@@ -63,9 +70,9 @@ func main() {
 		if err := healthSrv.Shutdown(context.Background()); err != nil {
 			log.Printf("HTTP server Shutdown with error: %v", err)
 		}
+		log.Println("Server has been stopped")
 	}()
 
-	// TODO: Postpone server start regarding Env variable
 	if cfg.initTime > 0 {
 		<-time.After(cfg.initTime)
 	}
@@ -74,6 +81,5 @@ func main() {
 		log.Fatalf("HTTP server ListenAndServe: %v", err)
 	}
 
-	// TODO: Suden interrupt with non-0 exit code
-	log.Println("Server has been stopped")
+	os.Exit(cfg.exitCode)
 }
