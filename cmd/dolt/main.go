@@ -7,6 +7,8 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"strconv"
+	"strings"
 	"syscall"
 	"time"
 )
@@ -21,16 +23,57 @@ type config struct {
 }
 
 func newConfig() *config {
-	return &config{
+	cfg := &config{
 		exitCode: 0,
 		healthUri: url.URL{
 			Host: ":8080",
+			Path: "/health",
 		},
 		ignoreSigs: []os.Signal{},
 		initTime:   0,
 		lifeTime:   0,
 		stopTime:   0,
 	}
+
+	if val := os.Getenv("EXITCODE"); val != "" {
+		if val, err := strconv.Atoi(val); err == nil {
+			cfg.exitCode = val
+		}
+	}
+
+	if val := os.Getenv("HEALTHURI"); val != "" {
+		if val, err := url.Parse(val); err == nil {
+			cfg.healthUri = *val
+		}
+	}
+
+	if vals := os.Getenv("IGNORESIGS"); vals != "" {
+		for _, v := range strings.Split(vals, ",") {
+			if val, err := strconv.Atoi(v); err == nil {
+				cfg.ignoreSigs = append(cfg.ignoreSigs, syscall.Signal(val))
+			}
+		}
+	}
+
+	if val := os.Getenv("INITTIME"); val != "" {
+		if val, err := time.ParseDuration(val); err == nil {
+			cfg.initTime = val
+		}
+	}
+
+	if val := os.Getenv("LIFETIME"); val != "" {
+		if val, err := time.ParseDuration(val); err == nil {
+			cfg.initTime = val
+		}
+	}
+
+	if val := os.Getenv("STOPTIME"); val != "" {
+		if val, err := time.ParseDuration(val); err == nil {
+			cfg.initTime = val
+		}
+	}
+
+	return cfg
 }
 
 type Handler struct{}
