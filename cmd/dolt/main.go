@@ -4,48 +4,82 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 )
+
+type config struct {
+	exitCode   int
+	healthUri  url.URL
+	ignoreSigs []os.Signal
+	initTime   time.Duration
+	lifeTime   time.Duration
+	stopTime   time.Duration
+}
+
+func newConfig() *config {
+	return &config{
+		exitCode: 0,
+		healthUri: url.URL{
+			Host: ":8080",
+		},
+		ignoreSigs: []os.Signal{},
+		initTime:   0,
+		lifeTime:   0,
+		stopTime:   0,
+	}
+}
 
 type Handler struct{}
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	log.Printf("Hello %#v", *r)
 	w.Write([]byte("OK"))
 }
 
 func main() {
-	// TODO: Read configuration from environment
+	cfg := newConfig()
 
 	sigint := make(chan os.Signal, 1)
 
-	// TODO: Define list of ignored syscall Signals
-	// signal.Ignore(syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGKILL)
+	if len(cfg.ignoreSigs) > 0 {
+		signal.Ignore(cfg.ignoreSigs...)
+	}
 
-	signal.Notify(sigint, syscall.SIGTERM, syscall.SIGQUIT)
+	signal.Notify(sigint, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGINT)
+
+	if cfg.lifeTime > 0 {
+		go func() {
+			<-time.After(cfg.lifeTime)
+			close(sigint)
+		}()
+	}
 
 	healthSrv := http.Server{
-		Addr:    ":8080",
+		Addr:    cfg.healthUri.Host,
 		Handler: &Handler{},
 	}
 
 	go func() {
 		<-sigint
-		// TODO: Postpone server shutdown regarding Env variable
+		if cfg.stopTime > 0 {
+			<-time.After(cfg.stopTime)
+		}
 		if err := healthSrv.Shutdown(context.Background()); err != nil {
 			log.Printf("HTTP server Shutdown with error: %v", err)
 		}
+		log.Println("Server has been stopped")
 	}()
 
-	// TODO: Postpone server start regarding Env variable
-
+	if cfg.initTime > 0 {
+		<-time.After(cfg.initTime)
+	}
 	log.Printf("Server has been started and listen on: %s", healthSrv.Addr)
 	if err := healthSrv.ListenAndServe(); err != http.ErrServerClosed {
 		log.Fatalf("HTTP server ListenAndServe: %v", err)
 	}
 
-	// TODO: Suden interrupt with non-0 exit code
-	log.Println("Server has been stopped")
+	os.Exit(cfg.exitCode)
 }
