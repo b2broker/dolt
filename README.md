@@ -31,3 +31,12 @@ how long it will takes to initialize the application;
 time of the application, after which it will be stopped;
 * STOPTIME (duration: N[ns|us|ms|s|m|h] or their combination), — defines for 
 how long it will takes to stop the application;
+
+Health Checks
+---
+
+Liveliness of main application will performed by additional application called 
+healthprobe. It will be invoked by Docker via HEALTHCHECK directive declared in 
+Dockerfile. Each time, it will try to GET against URL defined in HEALTHURI or 
+`http://localhost:8080/health` by default, and regarding success it will 
+inform docker about that.
