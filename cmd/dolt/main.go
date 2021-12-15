@@ -26,8 +26,9 @@ func newConfig() *config {
 	cfg := &config{
 		exitCode: 0,
 		healthUri: url.URL{
-			Host: ":8080",
-			Path: "/health",
+			Scheme: "http",
+			Host:   ":8080",
+			Path:   "/health",
 		},
 		ignoreSigs: []os.Signal{},
 		initTime:   0,
